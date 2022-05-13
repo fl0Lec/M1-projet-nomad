@@ -41,7 +41,7 @@ job "api" {
 
       driver = "docker"
       config {
-        image = "registry.app.unistra.fr/ggirard/quizzical-tesla/qute-backend"
+        image = "sharkie01/backend:latest"
         ports = ["http"]
       }
     }
