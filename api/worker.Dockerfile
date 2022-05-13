@@ -4,4 +4,4 @@ COPY . /app
 WORKDIR /app
 RUN pip install .
 
-CMD celery worker --app image_api.worker.app
+CMD celery --app image_api.worker.app worker
