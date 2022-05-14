@@ -8,6 +8,22 @@ job "api" {
   group "worker" {
     count = 4
 
+    scaling {
+      enabled = true
+      min     = 4
+      max     = 16
+
+      policy {
+        evaluation_interval = "10s"
+        cooldown            = "1m"
+        check "memory" {
+          query = "avg_cpu"
+          strategy "target-value" {
+            target = 80
+          }
+        }
+      }
+    }
 
     task "worker" {
       service {

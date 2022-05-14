@@ -6,7 +6,24 @@ job "webf" {
 
 
   group "frontend" {
-    count = 1
+    count = 4
+
+    scaling {
+      enabled = true
+      min     = 1
+      max     = 10
+
+      policy {
+        evaluation_interval = "10s"
+        cooldown            = "1m"
+        check "memory" {
+          query = "avg_mem"
+          strategy "target-value" {
+            target = 150
+          }
+        }
+      }
+    }
 
     network {
       port "http" {
@@ -45,6 +62,11 @@ job "webf" {
         destination = "local/web/config.json"
         change_mode = "signal"
         change_signal = "SIGHUP"
+      }
+
+      resources {
+        cpu    = 100 # MHz
+        memory = 200 # MB
       }
     }
   }
@@ -112,6 +134,11 @@ job "webf" {
         # configuration change
         change_mode = "signal"
         change_signal = "SIGHUP"
+      }
+
+      resources {
+        cpu    = 200 # MHz
+        memory = 200 # MB
       }
     }
   }
