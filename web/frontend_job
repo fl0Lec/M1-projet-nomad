@@ -1,0 +1,120 @@
+job "webf" {
+
+  datacenters = ["dc1"]
+
+  type = "service"
+
+
+  group "frontend" {
+    count = 1
+
+    network {
+      port "http" {
+        static = 8080
+        to = 3000
+      }
+    }
+
+    task "frontend" {
+
+      service {
+        name = "frontend"
+        tags = ["global", "web"]
+        port = "http"
+      }
+
+
+      driver = "docker"
+
+      config {
+        image = "sharkie01/frontend"
+        ports = ["http"]
+        mount {
+          type = "bind"
+          source = "local/web"
+          target = "/app/public"
+        }
+      }
+
+      template {
+        data = <<EOH
+          {
+            "endpoint": "https://{{ range service "backend"}}{{index .ServiceMeta "name"}}{{ end }}"
+          }
+        EOH
+
+        destination = "local/web/config.json"
+        change_mode = "signal"
+        change_signal = "SIGHUP"
+      }
+    }
+  }
+
+  group "haproxy" {
+    count = 1
+    
+    affinity {
+      attribute = "${unique.network.ip-address}"
+      operator  = "="
+      value     = "172.16.1.23"
+      weight    = 100
+      }
+    network {
+      port "http" {
+        static = 8081
+        to = 80
+      }
+    }
+  
+
+    task "haproxy" {
+
+      service {
+        name = "haproxy"
+        tags = ["global", "web", "haproxy"]
+        port = "http"
+      }
+
+      driver = "docker"
+
+      config {
+        image = "haproxy:2.3"
+        ports = ["http"]
+        mount {
+          type = "bind"
+          source = "local/config"
+          target = "/usr/local/etc/haproxy"
+        }
+      }
+      template {
+        # Gabarit
+        data = <<EOH
+          global
+            daemon
+            maxconn 1024
+          defaults
+            mode http
+            balance roundrobin
+            timeout client 60s
+            timeout connect 60s
+            timeout server 60s
+          frontend http
+            bind *:80
+            default_backend web
+          backend web
+            balance roundrobin
+            {{- range $index, $element := service "frontend" }}
+              server web{{ $index }} {{ $element.Address }}:{{ $element.Port }}
+            {{- end }}
+          EOH
+        # Généré dans le dossier "local/config" de la tâche
+        destination = "local/config/haproxy.cfg"
+        # Nomad envoie un signal HUP au conteneur quand le fichier de
+        # configuration change
+        change_mode = "signal"
+        change_signal = "SIGHUP"
+      }
+    }
+  }
+
+}

@@ -1,0 +1,53 @@
+job "api" {
+
+  datacenters = ["dc1"]
+
+  type = "service"
+
+
+  group "worker" {
+    count = 4
+
+
+    task "worker" {
+      service {
+        name = "worker"
+        tags = ["global", "api", "work"]
+      }
+
+      driver = "docker"
+      config {
+        image = "sharkie01/cloud:latest"
+      }
+    }
+  }
+
+  group "backend" {
+    count = 1
+
+    network {
+      port "http" {
+        static = 8080
+        to = 8080
+      }
+    }
+
+    task "backend" {
+
+      service {
+        name = "backend"
+        tags = ["global", "api", "backend"]
+        port = "http"
+        meta {
+          name = "${meta.outname}"
+        }
+      }
+      
+      driver = "docker"
+      config {
+        image = "sharkie01/backend:latest"
+        ports = ["http"]
+      }
+    }
+  }
+}
