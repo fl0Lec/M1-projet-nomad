@@ -10,7 +10,6 @@ job "webf" {
 
     network {
       port "http" {
-        static = 8080
         to = 3000
       }
     }
