@@ -1,13 +1,11 @@
-build image:
-    image: docker:20.10.10
-    services:
-        - docker:20.10.10-dind
-
 stages:
   - docker
 
 docker-frontend:
   stage: docker
+  image: docker:20.10.10
+  services:
+    - docker:20.10.10-dind
   script:
     - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
     - cd web/
@@ -16,6 +14,9 @@ docker-frontend:
 
 docker-backend:
   stage: docker
+  image: docker:20.10.10
+  services:
+    - docker:20.10.10-dind
   script:
     - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
     - cd api/
