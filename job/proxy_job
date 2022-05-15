@@ -1,20 +1,12 @@
-# to be improved does not full work yet
 job "proxy" {
 
   datacenters = ["dc1"]
   type = "service"
   priority = "100"
-  constraint {
-      attribute = "${meta.master}"
-      value = "1"
-  }
-  group "proxy" {
-    count = 1
+
+  group "proxyf" {
+    count = 2
     network {
-      port "api" {
-        static = 8080
-        to = 80
-      }
       port "web" {
         static = 8081
         to = 80
@@ -22,8 +14,8 @@ job "proxy" {
     }
 
     service {
-        name = "proxy"
-        tags = ["global", "api", "backend"]
+        name = "frontproxy"
+        tags = ["global", "proxy"]
         meta {
           name = "${meta.outname}"
         }
@@ -72,11 +64,28 @@ job "proxy" {
       }
 
       resources {
-        cpu    = 500 # MHz
-        memory = 500 # MB
+        cpu    = 300 # MHz
+        memory = 300 # MB
+      }
+    }
+  }
+  
+  group "proxyb" {
+    count = 1
+    network {
+      port "api" {
+        static = 8080
+        to = 80
       }
     }
 
+    service {
+        name = "backproxy"
+        tags = ["global", "proxy"]
+        meta {
+          name = "${meta.outname}"
+        }
+    }
     task "backproxy" {
 
       driver = "docker"
@@ -120,8 +129,8 @@ job "proxy" {
       }
 
       resources {
-        cpu    = 500 # MHz
-        memory = 500 # MB
+        cpu    = 300 # MHz
+        memory = 300 # MB
       }
     }
   }
