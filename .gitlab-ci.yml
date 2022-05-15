@@ -1,27 +1,32 @@
-variables:
-  DOCKER_TLS_CERTDIR: ""
-
 stages:
   - docker
 
 docker-frontend:
   stage: docker
-  image: docker:18.09.8
-  services:
-    - docker:18.09.8-dind
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   script:
-    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+    - mkdir -p /kaniko/.docker
     - cd web/
-    - docker build -f frontend.Dockerfile -t sharkie01/frontend:latest .
-    - docker push sharkie01/frontend
+    - echo "{\"auths\":{\"hub.docker.com\":{\"auth\":\"$(printf "%s:%s" "${DOCKER_REGISTRY_USER}" "${DOCKER_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "."
+      --dockerfile "frontend.Dockerfile"
+      --destination "sharkie01/frontend:latest"
 
 docker-backend:
   stage: docker
-  image: docker:18.09.8
-  services:
-    - docker:18.09.8-dind
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   script:
-    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+    - mkdir -p /kaniko/.docker
     - cd api/
-    - docker build -f backend.Dockerfile -t sharkie01/backend:latest .
-    - docker push sharkie01/backend
+    - echo "{\"auths\":{\"hub.docker.com\":{\"auth\":\"$(printf "%s:%s" "${DOCKER_REGISTRY_USER}" "${DOCKER_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "."
+      --dockerfile "backend.Dockerfile"
+      --destination "sharkie01/backend:latest"
