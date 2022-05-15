@@ -6,9 +6,9 @@ stages:
 
 docker-frontend:
   stage: docker
-  image: docker:20.10.10
+  image: docker:18.09.8
   services:
-    - docker:20.10.10-dind
+    - docker:18.09.8-dind
   script:
     - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
     - cd web/
@@ -17,9 +17,9 @@ docker-frontend:
 
 docker-backend:
   stage: docker
-  image: docker:20.10.10
+  image: docker:18.09.8
   services:
-    - docker:20.10.10-dind
+    - docker:18.09.8-dind
   script:
     - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
     - cd api/
