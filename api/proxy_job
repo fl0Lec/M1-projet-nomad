@@ -1,0 +1,127 @@
+job "proxy" {
+
+  datacenters = ["dc1"]
+  type = "service"
+  priority = "100"
+  constraint {
+      attribute = "${meta.master}"
+      value = "1"
+  }
+  group "proxy" {
+    count = 1
+    network {
+      port "api" {
+        static = 8080
+        to = 80
+      }
+      port "web" {
+        static = 8081
+        to = 80
+      }
+    }
+
+    service {
+        name = "proxy"
+        tags = ["global", "api", "backend"]
+        meta {
+          name = "${meta.outname}"
+        }
+    }
+    # web proxy
+    task "frontproxy" {
+
+      driver = "docker"
+
+      config {
+        image = "haproxy:2.3"
+        ports = ["web"]
+        mount {
+          type = "bind"
+          source = "local/front"
+          target = "/usr/local/etc/haproxy"
+        }
+      }
+      template {
+        # Gabarit
+        data = <<EOH
+          global
+            daemon
+            maxconn 1024
+          defaults
+            mode http
+            balance roundrobin
+            timeout client 60s
+            timeout connect 60s
+            timeout server 60s
+          frontend http
+            bind *:80
+            default_backend web
+          backend web
+            balance roundrobin
+            {{- range $index, $element := service "frontend" }}
+              server web{{ $index }} {{ $element.Address }}:{{ $element.Port }}
+            {{- end }}
+          EOH
+        # Généré dans le dossier "local/config" de la tâche
+        destination = "local/front/haproxy.cfg"
+        # Nomad envoie un signal HUP au conteneur quand le fichier de
+        # configuration change
+        change_mode = "signal"
+        change_signal = "SIGHUP"
+      }
+
+      resources {
+        cpu    = 500 # MHz
+        memory = 500 # MB
+      }
+    }
+
+    task "backproxy" {
+
+      driver = "docker"
+
+      config {
+        image = "haproxy:2.3"
+        ports = ["api"]
+        mount {
+          type = "bind"
+          source = "local/back"
+          target = "/usr/local/etc/haproxy"
+        }
+      }
+      template {
+        # Gabarit
+        data = <<EOH
+          global
+            daemon
+            maxconn 1024
+          defaults
+            mode tcp
+            balance roundrobin
+            timeout client 60s
+            timeout connect 60s
+            timeout server 60s
+          frontend http
+            bind *:80
+            default_backend web
+          backend web
+            balance roundrobin
+            {{- range $index, $element := service "backend" }}
+              server web{{ $index }} {{ $element.Address }}:{{ $element.Port }}
+            {{- end }}
+          EOH
+        # Généré dans le dossier "local/config" de la tâche
+        destination = "local/back/haproxy.cfg"
+        # Nomad envoie un signal HUP au conteneur quand le fichier de
+        # configuration change
+        change_mode = "signal"
+        change_signal = "SIGHUP"
+      }
+
+      resources {
+        cpu    = 500 # MHz
+        memory = 500 # MB
+      }
+    }
+  }
+}

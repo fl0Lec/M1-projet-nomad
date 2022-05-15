@@ -1,4 +1,4 @@
-job "api" {
+job "myapi" {
 
   datacenters = ["dc1"]
 
@@ -7,7 +7,6 @@ job "api" {
 
   group "worker" {
     count = 4
-
     scaling {
       enabled = true
       min     = 4
@@ -25,6 +24,7 @@ job "api" {
       }
     }
 
+
     task "worker" {
       service {
         name = "worker"
@@ -35,15 +35,19 @@ job "api" {
       config {
         image = "sharkie01/cloud:latest"
       }
+
+      resources {
+        cpu    = 400 # MHz
+        memory = 100 # MB
+      }
     }
   }
 
   group "backend" {
-    count = 1
+    count = 2
 
     network {
       port "http" {
-        static = 8080
         to = 8080
       }
     }
@@ -63,6 +67,11 @@ job "api" {
       config {
         image = "sharkie01/backend:latest"
         ports = ["http"]
+      }
+
+      resources {
+        cpu    = 200 # MHz
+        memory = 150 # MB
       }
     }
   }

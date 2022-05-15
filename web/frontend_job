@@ -1,4 +1,4 @@
-job "webf" {
+job "myweb" {
 
   datacenters = ["dc1"]
 
@@ -7,24 +7,7 @@ job "webf" {
 
   group "frontend" {
     count = 4
-
-    scaling {
-      enabled = true
-      min     = 1
-      max     = 10
-
-      policy {
-        evaluation_interval = "10s"
-        cooldown            = "1m"
-        check "memory" {
-          query = "avg_mem"
-          strategy "target-value" {
-            target = 150
-          }
-        }
-      }
-    }
-
+    
     network {
       port "http" {
         to = 3000
@@ -55,7 +38,7 @@ job "webf" {
       template {
         data = <<EOH
           {
-            "endpoint": "https://{{ range service "backend"}}{{index .ServiceMeta "name"}}{{ end }}"
+            "endpoint": "https://{{ range service "backproxy"}}{{index .ServiceMeta "name"}}{{ end }}"
           }
         EOH
 
@@ -66,79 +49,7 @@ job "webf" {
 
       resources {
         cpu    = 100 # MHz
-        memory = 200 # MB
-      }
-    }
-  }
-
-  group "haproxy" {
-    count = 1
-    
-    affinity {
-      attribute = "${unique.network.ip-address}"
-      operator  = "="
-      value     = "172.16.1.23"
-      weight    = 100
-      }
-    network {
-      port "http" {
-        static = 8081
-        to = 80
-      }
-    }
-  
-
-    task "haproxy" {
-
-      service {
-        name = "haproxy"
-        tags = ["global", "web", "haproxy"]
-        port = "http"
-      }
-
-      driver = "docker"
-
-      config {
-        image = "haproxy:2.3"
-        ports = ["http"]
-        mount {
-          type = "bind"
-          source = "local/config"
-          target = "/usr/local/etc/haproxy"
-        }
-      }
-      template {
-        # Gabarit
-        data = <<EOH
-          global
-            daemon
-            maxconn 1024
-          defaults
-            mode http
-            balance roundrobin
-            timeout client 60s
-            timeout connect 60s
-            timeout server 60s
-          frontend http
-            bind *:80
-            default_backend web
-          backend web
-            balance roundrobin
-            {{- range $index, $element := service "frontend" }}
-              server web{{ $index }} {{ $element.Address }}:{{ $element.Port }}
-            {{- end }}
-          EOH
-        # Généré dans le dossier "local/config" de la tâche
-        destination = "local/config/haproxy.cfg"
-        # Nomad envoie un signal HUP au conteneur quand le fichier de
-        # configuration change
-        change_mode = "signal"
-        change_signal = "SIGHUP"
-      }
-
-      resources {
-        cpu    = 200 # MHz
-        memory = 200 # MB
+        memory = 150 # MB
       }
     }
   }
