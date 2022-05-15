@@ -1,4 +1,3 @@
-# to be improved does not full work yet
 job "proxy" {
 
   datacenters = ["dc1"]
