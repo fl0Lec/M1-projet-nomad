@@ -7,6 +7,11 @@ job "myweb" {
 
   group "frontend" {
     count = 4
+    scaling {
+      enabled = true
+      min     = 1
+      max     = 10
+    }
     
     network {
       port "http" {
@@ -21,7 +26,6 @@ job "myweb" {
         tags = ["global", "web"]
         port = "http"
       }
-
 
       driver = "docker"
 
