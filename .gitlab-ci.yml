@@ -1,0 +1,18 @@
+stages:
+  - docker
+
+docker-frontend:
+  stage: docker
+  script:
+    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+    - cd web/
+    - docker build -f frontend.Dockerfile -t sharkie01/frontend:latest .
+    - docker push sharkie01/frontend
+
+docker-backend:
+  stage: docker
+  script:
+    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+    - cd api/
+    - docker build -f backend.Dockerfile -t sharkie01/backend:latest .
+    - docker push sharkie01/backend
