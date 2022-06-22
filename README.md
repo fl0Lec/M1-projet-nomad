@@ -1,9 +1,11 @@
 # quizzical-tesla
+A picture sizer project. The front and backend was given by the professor. 
+Use Consul for service Discovery and Nomad for container orchestration
 
 ## Organisation
-- web : code source du projet + dockerfile pour frontend
-- api : code source du projet + dockerfile pour backend et worker 
-- job : contient les jobs nomad
-- script : contient les scripts et fichier de configuration neccessaire à l'ajout d'un nouveau noeud
+- web : source of the project + dockerfile for frontend
+- api : source of the projet + dockerfile for backend and worker 
+- job : Nomad job
+- script : script and configuration file necessary to had a new node to the cluster
 
-Par Gaëlle Girard et Florent Lecoultre
+By Gaëlle Girard and Florent Lecoultre
